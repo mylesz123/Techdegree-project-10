@@ -12,7 +12,7 @@ class UserSignUp extends Component {
         password: '',
         confirmPassword: '',
         validationErrorMsg: '',
-        displayError: false,
+        showErr: false,
     };
 
     onChange = (e) => {
@@ -26,49 +26,49 @@ class UserSignUp extends Component {
 
         if(password === confirmPassword){
           try {
-            const response = await axios.post('http://localhost:5000/api/users', {
+            const res = await axios.post('http://localhost:5000/api/users', {
               firstName,
               lastName,
               emailAddress,
               password
             })
-            if(response.status === 201){
+            if(res.status === 201){
               this.setState({
-                  displayError: false
+                  showErr: false
               })
               this.props.signIn(this.state.emailAddress, this.state.password, this.props.history);
               this.props.history.push('/');
             }
           }
           catch (e) {
-            if(e.response.status === 400){
+            if(e.res.status === 400){
               this.setState({
-                  validationErrorMsg: this.handleValidationMsg(e.response.data.message),
-                  displayError: true
+                  validationErrorMsg: this.handleValidationMsg(e.res.data.message),
+                  showErr: true
               })
             }
-          }  
+          }
         }
 
         else {
           this.setState({
               validationErrorMsg: 'Passwords must be identical',
-              displayError: true
+              showErr: true
             })
         }
     };
 
     handleValidationMsg = (errorResponse) => {
-        // Formatting the server response message to be rendered properly
-        const splitAndSpliced = errorResponse.split(':').splice(2);
+        // Formatting the server res message to be rendered properly
+        const fixed = errorResponse.split(':').splice(2);
         const formattedErrorMsg = [];
 
-        for (let i = 0; i < splitAndSpliced.length; i++){
-          if(i !== splitAndSpliced.length - 1){
-            formattedErrorMsg.push(splitAndSpliced[i].substring( 1 , splitAndSpliced[i].indexOf(',')));
+        for (let i = 0; i < fixed.length; i++){
+          if(i !== fixed.length - 1){
+            formattedErrorMsg.push(fixed[i].substring( 1 , fixed[i].indexOf(',')));
           }
           else {
-            formattedErrorMsg.push(splitAndSpliced[splitAndSpliced.length - 1].trim());
+            formattedErrorMsg.push(fixed[fixed.length - 1].trim());
           }
         }
 
@@ -94,7 +94,7 @@ class UserSignUp extends Component {
                     <div className="grid-33 centered signin">
                         <div>
                         <h1>Sign Up</h1>
-                            { this.state.displayError
+                            { this.state.showErr
                             ? <div>
                                 <h2 className="validation--errors--label">Validation Error</h2>
                                 <div className="validation-errors">
@@ -165,7 +165,7 @@ class UserSignUp extends Component {
                             </form>
                         </div>
                         <p>&nbsp;</p>
-                        <p>Already have a user account? <Link to="signin">Click here</Link> to sign in!</p>
+                        <p>Already have an account? <Link to="signin">Click here</Link> to sign in!</p>
                     </div>
                 </div>
         )
