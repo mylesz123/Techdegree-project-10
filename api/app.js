@@ -98,6 +98,7 @@ app.get("/", (req, res) => {
 }); //home root route
 
 app.get("/api/users", (req, res, next) => {
+
   if(req.auth) {
     User.findOne({emailAddress: req.user}).then(data => {
       res.status(200);

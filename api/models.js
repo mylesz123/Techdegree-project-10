@@ -9,7 +9,7 @@ const CourseSchema = new Schema({ //_id: { type: ObjectId },
   title : { type: String, required: [true, "Title is required."]},
   description : { type: String, required: [true, "Description is required."]},
   estimatedTime : { type: String, default: '19 hours' },
-  materials : { type: String, default: 'Your Brain!' },
+  materialsNeeded : { type: String, default: 'Your Brain!' },
 })
 /*USER*/
 const UserSchema = new Schema({
