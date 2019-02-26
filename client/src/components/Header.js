@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'react-router-dom/es/Link';
 
+/* header for sign in and sign out and home routes */
+
 const Header = (props) => {
     const signedInHeader = 
         <nav>
@@ -12,7 +14,7 @@ const Header = (props) => {
         <nav>
             <Link to='/signup' className='signup'> Sign Up </Link>
             <Link to='/signin' className='signin'> Sign In </Link>
-        </nav>
+        </nav> // !signed in header
 
     return (
         <div className='header'>
