@@ -1,113 +1,116 @@
-//stateful ... remeber that variables inside of functions are local!
 import React, { Component } from 'react';
+import axios from 'axios';
 import Link from "react-router-dom/es/Link";
-import {withRouter} from "react-router-dom";
-import axios from "axios";
+import { withRouter } from "react-router-dom";
 
-class CourseUpdate extends Component {
+
+class UpdateCourse extends Component {
+
     state = {
         user:{},
         title:'',
         description:'',
         estimatedTime:'',
         materialsNeeded:'',
-        errMsgHeader: '',
-        errMsg: '',
+        errorMsgHeader: '',
+        errorMsg: '',
         hideValidationWrapper: true,
-    }
+    };
 
-    // get existing data
-    async componentDidMount(){
+    // Fetch existing data
+    async componentDidMount() {
         try{
-            const res = await axios.get(`http://localhost:5000/api/courses/${this.props.match.params.id}`);
-            const { user, title, description, estimatedTime, materialsNeeded } = res.data;
-            this.setState({
-              user,
-              title,
-              description,
-              estimatedTime,
-              materialsNeeded,
-            })
-        }
-        catch (err){
-            //not found
-            if(err.res.status === 404){
-                this.props.history.push('/notFound');
-            }
-            //forbidden/ unauthorized
-            if(err.res.status === 401 || err.res.status === 403){
+            const response = await axios.get(`http://localhost:5000/api/courses/${this.props.match.params.id}`);
+                const { title, description, estimatedTime, materialsNeeded, user } = response.data;
+                this.setState({
+                    user,
+                    title,
+                    description,
+                    estimatedTime,
+                    materialsNeeded,
+                });
+        } catch (e) {
+            if(e.response.status === 404) {
+                this.props.history.push('/notfound');
+            }  if(e.response.status === 401 || e.response.status === 403) {
                 this.props.history.push('/forbidden');
+            } else {
+                this.props.history.push('/error');
             }
-            else{this.props.history.push('/error')}
         }
     }
 
-    handleChange = (event) => {
-        this.setState({
-            [event.target.id] : event.target.value
-        });
-    }
+    handleChange = (e) => {
+        this.setState({[e.target.id] : e.target.value});
+    };
 
-    // Update course data
-    handleSubmit = async (event) => {
-        event.preventDefault();
+    // Update data
+    handleSubmit = async (e) => {
+        e.preventDefault();
         const { title, description, estimatedTime, materialsNeeded, user } = this.state;
-        try{
-            const res = await axios.put(`http://localhost:5000/api/courses/${this.props.match.params.id}`, {
-                user,
-                title,
-                description,
-                estimatedTime,
-                materialsNeeded,
-            }, 
-            //parse authorization data from local storage
-            { headers: { 'Authorization' : JSON.parse(window.localStorage.getItem('auth'))} 
-            });
-            // if no content
-            if(res.status === 204){
-                this.props.history.goBack();
+        //if title and description are !blank then proceed, else throw validation error
+        if(title !== "" && description !== ""){
+            try{
+                const response = await axios.put(`http://localhost:5000/api/courses/${this.props.match.params.id}`, {
+                    user,
+                    title,
+                    description,
+                    estimatedTime,
+                    materialsNeeded,
+                }, 
+                //parse authorization data from local storage
+                { headers: { 'Authorization' : JSON.parse(window.localStorage.getItem('auth'))}
+                });
+                // if no content
+                if(response.status === 204){
+                    this.props.history.goBack();
+                }
+            } 
+            catch (e) { //bad req
+                if(e.response.status === 400){
+                    this.setState({
+                        errorMsgHeader: 'Validation error',
+                        errorMsg: e.response.data.message,
+                        hideValidationWrapper: false
+                    });
+                }
+                //forbidden/ unauthorized
+                if(e.response.status === 401 || e.response.status === 403){
+                    this.setState({
+                        errorMsgHeader: 'Authorization error',
+                        errorMsg: e.response.data.message,
+                        hideValidationWrapper: false
+                    });
+                }
             }
-        } 
-        catch (err) {
-            // incorrect request
-            if(err.res.status === 400){
-                this.setState({
-                    errMsgHeader: 'Bad request',
-                    errMsg: err.res.data.message,
-                    hideValidationWrapper: false
-                })
-            }
-            //forbidden/ unauthorized
-            if(err.res.status === 401 || err.res.status === 403){
-                this.setState({
-                    errMsgHeader: 'Authorization error',
-                    errMsg: err.res.data.message,
-                    hideValidationWrapper: false
-                })
-            }
+            
         }
+        else {
+            this.setState({
+                hideValidationWrapper: false,
+                errorMsgHeader: 'Validation error',
+            });
+        }
+        
 
     };
 
-    
     render() {
-        const { title, description, estimatedTime, materialsNeeded, errMsgHeader, errMsg } = this.state;
-
+        const { title, description, estimatedTime, materialsNeeded, errorMsgHeader, errorMsg
+        } = this.state;
         return (
             <div className="bounds course--detail">
                 <h1>Update Course</h1>
                 <div>
-                    { !this.state.hideValidationWrapper 
-                    ? <div>
-                        <h2 className="validation--errors--label">{ errMsgHeader }</h2>
+                    { !this.state.hideValidationWrapper ? <div>
+                        <h2 className="validation--errors--label">{ errorMsgHeader }</h2>
                         <div className="validation-errors">
                             <ul>
-                                <li>{ errMsg }</li>
+                                <li>{ errorMsg }</li>
                             </ul>
                         </div>
-                    </div> 
-                    : null }
-                    <form onSubmit={ this.handleSubmit }>
+                    </div> : null }
+                    <form onSubmit={this.handleSubmit}>
                         <div className="grid-66">
                             <div className="course--header">
                                 <h4 className="course--label">Course</h4>
@@ -115,20 +118,20 @@ class CourseUpdate extends Component {
                                     <input
                                         id="title"
                                         name="title"
-                                        onChange={ this.handleChange }
+                                        onChange={this.handleChange}
                                         type="text"
                                         className="input-title course--title--input"
                                         placeholder="Course title..."
                                         value={ title }/>
                                     </div>
-                                <p> - By { this.state.user.firstName } { this.state.user.lastName } </p>
+                                <p>By {this.state.user.firstName} {this.state.user.lastName}</p>
                             </div>
                             <div className="course--description">
                                 <div>
                                     <textarea
                                         id="description"
                                         name="description"
-                                        onChange={ this.handleChange }
+                                        onChange={this.handleChange}
                                         value={ description }
                                         placeholder="Course description...">
                                     </textarea>
@@ -159,7 +162,7 @@ class CourseUpdate extends Component {
                                                 name="materialsNeeded"
                                                 onChange={this.handleChange}
                                                 value={ materialsNeeded }
-                                                placeholder=" What materials? ">
+                                                placeholder="List materials...">
                                             </textarea>
                                         </div>
                                     </li>
@@ -173,10 +176,8 @@ class CourseUpdate extends Component {
                     </form>
                 </div>
             </div>
-        )     
+        )
     }
-
-
 }
 
-export default withRouter(CourseUpdate);
+export default withRouter(UpdateCourse);

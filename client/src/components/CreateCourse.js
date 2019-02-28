@@ -5,91 +5,85 @@ import {withRouter} from "react-router-dom";
 import axios from "axios";
 
 class CreateCourse extends Component {
+
     state = {
         title: "",
-        errMsg: "",
+        errorMsg: "",
         description: "",
         estimatedTime: "",
-        errMsgHeader: "",
+        errorMsgHeader: "",
         materialsNeeded: "",
         hideValidationWrapper: true,
-    }
+    };
 
-    handleChange = (event) => {
+
+    handleChange = (e) => {
         this.setState({
-            [event.target.id] : event.target.value
+            [e.target.id]: e.target.value
         });
+    };
 
-    }
 
-    handleSubmit = async (event) => {
-        event.preventDefault();
+    handleSubmit = async (e) => {
+        e.preventDefault();
         const user = JSON.parse(window.localStorage.getItem('user'));
-        console.log(user);
         const { title, description, estimatedTime, materialsNeeded} = this.state;
-        
-        // axios response
         try {
-            const res = await axios.post('http://localhost:5000/api/courses',
-            {
+            const response = await axios.post('http://localhost:5000/api/courses', {
                 user,
                 title,
                 description,
                 estimatedTime,
                 materialsNeeded,
-            },
+            }, 
             {
                 headers: {'Authorization': JSON.parse(window.localStorage.getItem('auth'))}
             });
-            
-            if (res.status === 201) {
+            if (response.status === 201) {
                 this.props.history.goBack();
             }
-        }
-        catch (err) {
-            if(err.res.status === 400){
+        } 
+        catch (e) {
+            if(e.response.status === 400){
                 this.setState({
-                    errMsgHeader: 'Validation error',
-                    errMsg: err.res.data.message,
+                    errorMsgHeader: 'Validation error',
+                    errorMsg: e.response.data.message,
                     hideValidationWrapper: false
                 });
             }
-            if(err.res.status === 401 || err.res.status === 403){
+            if(e.response.status === 401 || e.response.status === 403){
                 this.setState({
-                    errMsgHeader: 'Authorization error',
-                    errMsg: err.res.data.message,
+                    errorMsgHeader: 'Authorization error',
+                    errorMsg: e.response.data.message,
                     hideValidationWrapper: false
                 });
             }
         }
-    }
+    };
 
-    //render
-    render(){
-        const { title, description, estimatedTime, materialsNeeded, errMsg, errMsgHeader } = this.state;
+    render() {
+        const { title, description, estimatedTime, materialsNeeded, errorMsg, errorMsgHeader } = this.state;
 
         return (
             <div className="bounds course--detail">
                 <h1>Create Course</h1>
                 <div>
-                    { !this.state.hideValidationWrapper
-                      ? <div>
-                          <h2 className="validation--errors--label">{ errMsgHeader }</h2>
-                          <div className="validation-errors">
-                              <ul>
-                                  <li>{ errMsg }</li>
-                              </ul>
-                          </div>
-                      </div>
-                      : null }
-                    <form onSubmit={ this.handleSubmit }>
+                    { !this.state.hideValidationWrapper ? <div>
+                        <h2 className="validation--errors--label">{ errorMsgHeader }</h2>
+                        <div className="validation-errors">
+                            <ul>
+                                <li>{ errorMsg }</li>
+                            </ul>
+                        </div>
+                    </div> : null }
+                    <form onSubmit={this.handleSubmit}>
                         <div className="grid-66">
                             <div className="course--header">
                                 <h4 className="course--label">Course</h4>
                                 <div>
                                     <input className="input-title course--title--input"
                                         id="title"
-                                        onChange={ this.handleChange }
+                                        onChange={this.handleChange}
                                         name="title"
                                         type="text"
                                         placeholder="Enter Course title"
@@ -104,7 +98,7 @@ class CreateCourse extends Component {
                                         name="description"
                                         onChange={ this.handleChange }
                                         value={ description }
-                                        placeholder="Enter Course description">
+                                        placeholder="Provide A Course description.">
                                     </textarea>
                                 </div>
                             </div>
@@ -131,7 +125,7 @@ class CreateCourse extends Component {
                                                 name="materialsNeeded"
                                                 placeholder="List materials..."
                                                 onChange={ this.handleChange }
-                                                value={ materialsNeeded } >
+                                                value={ materialsNeeded }>
                                             </textarea>
                                         </div>
                                     </li>
@@ -145,8 +139,8 @@ class CreateCourse extends Component {
                     </form>
                 </div>
             </div>
-        );
-    }
+            );
+        }
 }
 
 export default withRouter(CreateCourse);

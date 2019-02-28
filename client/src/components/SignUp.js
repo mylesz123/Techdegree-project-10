@@ -12,98 +12,68 @@ class UserSignUp extends Component {
         password: '',
         confirmPassword: '',
         validationErrorMsg: '',
-        showErr: false,
+        displayError: false,
     };
 
     onChange = (e) => {
-        this.setState({ [e.target.name] : e.target.value});
+        this.setState({
+          [e.target.name]: e.target.value
+        });
     };
 
     handleSubmit = async (e) => {
         e.preventDefault();
 
-        const { firstName, lastName, emailAddress, password, confirmPassword } = this.state;
+            const { firstName, lastName, emailAddress, password, confirmPassword } = this.state;
 
-        if(password === confirmPassword){
-          try {
-            const res = await axios.post('http://localhost:5000/api/users', {
-              firstName,
-              lastName,
-              emailAddress,
-              password
-            })
-            if(res.status === 201){
-              this.setState({
-                  showErr: false
-              })
-              this.props.signIn(this.state.emailAddress, this.state.password, this.props.history);
-              this.props.history.push('/');
+            if(password === confirmPassword){
+                try {
+                    const response = await axios.post('http://localhost:5000/api/users', {
+                        firstName,
+                        lastName,
+                        emailAddress,
+                        password
+                    });
+                    if(response.status === 201){
+                        this.setState({
+                            displayError: false
+                        });
+                        this.props.signIn(this.state.emailAddress, this.state.password, this.props.history);
+                        this.props.history.push('/');
+                    }
+                } 
+                catch (e) {
+                    if(e.response.status === 400 || e.response.status === 500){
+                        this.setState({
+                            validationErrorMsg: e.response.data.message,
+                            displayError: true
+                        });
+                    }
+                }
+            } 
+            else {
+                this.setState({
+                    validationErrorMsg: 'Passwords must be identical',
+                    displayError: true
+                });
             }
-          }
-          catch (e) {
-            if(e.res.status === 400){
-              this.setState({
-                  validationErrorMsg: this.handleValidationMsg(e.res.data.message),
-                  showErr: true
-              })
-            }
-          }
-        }
-
-        else {
-          this.setState({
-              validationErrorMsg: 'Passwords must be identical',
-              showErr: true
-            })
-        }
-    };
-
-    handleValidationMsg = (errorResponse) => {
-        // Formatting the server res message to be rendered properly
-        const fixed = errorResponse.split(':').splice(2);
-        const formattedErrorMsg = [];
-
-        for (let i = 0; i < fixed.length; i++){
-          if(i !== fixed.length - 1){
-            formattedErrorMsg.push(fixed[i].substring( 1 , fixed[i].indexOf(',')));
-          }
-          else {
-            formattedErrorMsg.push(fixed[fixed.length - 1].trim());
-          }
-        }
-
-        if(this.state.firstName === ''){
-          return formattedErrorMsg[0];
-        }
-        if(this.state.lastName === ''){
-          return formattedErrorMsg[0];
-        }
-        if(this.state.emailAddress === ''){
-          return formattedErrorMsg[0];
-        }
-        if(this.state.password === ''){
-          return formattedErrorMsg[0];
-        }
     };
 
     render() {
         const { firstName, lastName, emailAddress, password, confirmPassword, validationErrorMsg } = this.state;
-
         return (
             <div className="bounds">
                     <div className="grid-33 centered signin">
                         <div>
                         <h1>Sign Up</h1>
-                            { this.state.showErr
-                            ? <div>
+                            {this.state.displayError ? <div>
                                 <h2 className="validation--errors--label">Validation Error</h2>
                                 <div className="validation-errors">
                                     <ul>
-                                      <li>{ validationErrorMsg }</li>
+                                        <li>{ validationErrorMsg }</li>
                                     </ul>
                                 </div>
                             </div> : null }
-
                             <form onSubmit={this.handleSubmit}>
                                 <div>
                                     <input
@@ -165,7 +135,7 @@ class UserSignUp extends Component {
                             </form>
                         </div>
                         <p>&nbsp;</p>
-                        <p>Already have an account? <Link to="signin">Click here</Link> to sign in!</p>
+                        <p>Already have a user account? <Link to="signin">Click here</Link> to sign in!</p>
                     </div>
                 </div>
         )
